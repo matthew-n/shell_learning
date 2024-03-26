@@ -92,11 +92,12 @@ error() {
 	local message=( "$@" )
 	local exit_code=3
 
-	local last_param="${messages[@]: -1}"
+	local last_param="${message[@]: -1}"
 	if is_uint "$last_param"; then
 		exit_code=$Last_param
 		# bash varaiable expansion for removing array[lenght-1]
-		unset "messages[${#messages[@]}-1]"
+		unset "messages[${#message[@]}-1]"
+	fi
 	warn "${messages[@]}"
 	exit $exit_code
 }
