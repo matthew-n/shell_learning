@@ -10,7 +10,7 @@ function parse_ts(s, ts) {
 	input: "Fri Mar  3 12:59:59 2099"
 	output: unix timestamp
 
-	pattern = "[[:upper:]][[:lower:]]{2} [[:upper:]][[:lower:]]{2} +([0-9]+) ([0-9]{2}):([0-9]{2}):([0-9]{2}) ([0-9]{4})"
+	pattern = "([A-Z][a-z]{2}) ([A-Z][a-z]{2}) +([0-9]{1,2}) ([0-9]{2}):([0-9]{2}):([0-9]{2}) ([0-9]{4})"
 	
 	match(s, pattern, ts)
 	
