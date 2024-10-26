@@ -1,13 +1,13 @@
-#!/user/bin/env bash
+#!/usr/bin/env bash
 
 # better to use set lines then flags on the `shebang` line
-set -o errexit	# scipt exits when command fails. Add `|| true` for commands that have non-standard outptuts
-set -o nounset	# exit when script encounters un-declared variable
-set -o pipefail	# fail script if there's an error in a pipe chain
-set -o errtrace	# trace errors thought `time` and some other commands
+# error on: non-zero exit, un-declared variables, error in pipe chian, error on pass-through comands (ex `time`)
+set -o errexit -o nounset -o pipefail -o errtrace
 
-## compact set line
-# set -xu -o pipefail -o errtrace
+#set -o errexit	# scipt exits when command fails. Add `|| true` for commands that have non-standard outptuts
+#set -o nounset	# exit when script encounters un-declared variable
+#set -o pipefail	# fail script if there's an error in a pipe chain
+#set -o errtrace	# trace errors thought `time` and some other commands
 
 ## DEBUGING
 _DEBUG=${DEBUG:-}
@@ -20,24 +20,34 @@ fi;
 ## Variables:
 # $ENV_VAR, $_GLOBAL_VAR, local $func_var
 
-# [Bash Shel Parameter Expandsion] (https://gnu.org/software/bash/manual/html_node/Shell-Parameter-Expansion.html)
+# [Bash Shell Parameter Expandsion] (https://gnu.org/software/bash/manual/html_node/Shell-Parameter-Expansion.html)
 # _MY_GLOBAL="${ENV_VAR:-"default_value"}" # default by variable expansion
 
-_WORKDIR=${TMP:-"/tmp"}					# Environmet variable TMP or default to `/tmp`
-_SCRIPT_NAME_W_EXT=${0##*/}				# Delete longest match from start of string (##) the pattern (*/)
-_SCRIPT_NAME=${_SCRIPT_NAME_W_EXT%.*}	# Delete shortest match from end of string (%) the pattern (.*)
+_WORKDIR=${TMP:-"/tmp"}			# Environmet variable TMP or default to `/tmp`
+_SCRIPT_NAME_W_EXT=${0##*/}		# Delete longest match from start of string (##) to the pattern (*/)
+_SCRIPT_NAME=${_SCRIPT_NAME_W_EXT%.*}	# Delete shortest match from end of string (%) to the pattern (.*)
+
+## file parts with expantion
+_SOME_FILE="/tmp/path/to/file.log"
+
+# https://stackoverflow.com/a/965072
+echo "Original Full Path: ${_SOME_FILE}"
+echo "Original Path: ${_SOME_FILE%/*}/"
+echo "Original File: ${_SOME_FILE##*/}"
+echo "Extention: ${_SOME_FILE##*.}"
+echo "New Path: ${_SOME_FILE%*.}$(date +%y%m%d_%H%M%S).${_SOME_FILE##*.}"
 
 ## assert ENV variable
-# echo "Importain variable MY_ENV: ${MY_ENV:?Is not not set, cannot proceed}"
+echo "Importain variable MY_ENV: ${MY_ENV:?Is not not set, cannot proceed}"
 
-# take a root path and create a folder with a template name
+# take a root (p)ath and a (t)emplate name to create a (d)irectory (ex. "/tmep/this_script.39d7wq/")
 _WORKDIR=$(mktemp -p "${_WORKDIR}" -t "${_SCRIPT_NAME}-XXXXXX" -d)
 
 ## Script Requirements
 
-case $BASH_VERSION in
-	''|[123].*) echo "ERROR: This script requrires Bash 4.0 or newer" >&2; exit 1;;
-esac
+# test bash version
+[ "${BASH_VERSINFO[0]:-0}" -ge 4 ] || { echo "ERROR: This script requires Bash 4.0 or newer" >&2; exit 1; }
+#case $BASH_VERSION in ''|[123].*) echo "ERROR: This script requrires Bash 4.0 or newer" >&2; exit 1;; esac;
 
 
 ## Usueful Setup
@@ -48,8 +58,9 @@ _RESET=$(tput sgr0)
 
 # Crash clean up
 
-# set handler function `on_exit` for sig 0 1 2 3 30 by name
+# set handler function `on_exit` for SIG evnets 0,1,2,3,30 by name
 trap  on_exit EXIT HUP INT QUIT TERM PWR
+
 # deffer eval until trap is hit by using single quotes (')
 trap 'printf "Trapped error on Line: %d, Exit Code: %d\n\n" ${LINENO} ${?}' ERR
 
@@ -57,18 +68,36 @@ trap 'printf "Trapped error on Line: %d, Exit Code: %d\n\n" ${LINENO} ${?}' ERR
 on_exit() {
 	echo "Cleaning up... (remove tmp files, etc...)"
 	#cd ${_WORKDIR}
-	## remove temp folder, assert non-empty expansion
+	## remove temp folder, assert non-empty expansion, no trailing **slash**
 	#[ -n "$_DEBUG" ] || rm -rf "${_WORKDIR}"
 }
 
-# test if the first parameter is only chars [0-9]
-is_uint() { case $1 in ''|*[!0-9]*) return 0;; *) return 1;; esac; }
+is_uint() {
+	# test if the first arg has only chars [0-9]
+	# @param: $1: stirng
+	# output: [success|fail]
+	# ref: https://stackoverflow.com/a/61835747
+	case $1 in ''|*[!0-9]*) return 0;; *) return 1;; esac;
+}
+
+contains() {
+	# test if array contins item
+	# @param: $1: array
+	# @param: $2: string
+
+	# all of the following arrays will return succes when searched for "word"
+	# ("bar" "word") or  ("foo" "word") or  ("foo" "word" "bar")
+	[[ $1 =~ (^| )$2($| ) ]]
+}
 
 installed() {
 	# @param $1: command name
 	# return: [success|fail]
 	command -v "$1" &> /dev/null;
 }
+
+# example: installed ip && { ip link; } 
+
 
 is_user_root() {
 	# reutrn: [success|fail]
@@ -116,9 +145,8 @@ usage() {
 
 
 ## Name complex expression with function
-
 help_wanted() {
-	#use { cmd ... } for grouping commands with out launching a new process
+	#use { cmd ... ; } for grouping commands with out launching a new process
 	[ "$#" -ge '1' ] && { [ "$1" = '-h' ] || [ "$1" = '--help' ] || [ "$1" = "-?" ] ; }
 }
 
@@ -154,10 +182,16 @@ embedded_awk_program() {
 	AWK_THAT_DOSE_XYZ
 }
 
-## Bash procewss substitution `<(cmd)` pass output (STDOUT) for seperate process `cmd` as file descriptor (fd 5)
+## Bash process substitution `<(cmd)` pass output (STDOUT) for seperate process `cmd` as file descriptor (fd 5)
 echo "match_me colA colB colC colD" | awk -f <(embedded_awk_program)
 
-## garb the output of HERDOC
+## pipe after HERDOC
+grep -E 'match \[me\]' <<- CAPTURE_TEST | tee > "${_WORKDIR}/what_is_left.out"
+	some text here
+	with we match [me] the line
+	or what about this one
+CAPTURE_TEST
+# or
 {
 	grep -E 'match \[me\]' <<- CAPTURE_TEST
 	some text here
@@ -178,16 +212,32 @@ fi
 	# all global variables are still in scope b/c this is in the same process
 	echo -e "\n## OS ##\n"
 	uname -a
-	cat /etc/*-release
+	cat /etc/{lsb,os}-release
 
 	df -x tmpf -x devtmpfs -x rootfs --human-readable
-	installed lsblk $$ {lsblk -o "NAME,FSTYPE,TYPE,OWNER,GROUP,MODE,UUID,FSAVAIL,FSUSE%,MOUNTPOINT"; }
+	installed lsblk $$ {lsblk -o "NAME,FSTYPE,TYPE,OWNER,GROUP,MODE,UUID,FSAVAIL,FSUSE%,MOUNTPOINT" };
 
 } | tee > "$_WORKDIR/report.out"
 
 
 ## loops
+echo "loops"
 
+# place input into array, prefixed with setting the split char(s)
+IFS= ;read -r -a MY_ARR <<< "Linux is awesome."
+
+for i in "${MY_ARR[@]}"; do
+  echo "$i"
+done
+
+# read lines into variables. Underscore (_) is the discard variable
+# IFS so read splits on space (0x20)
+while IFS=' ' read -r fieldA fieldB _ fieldC
+do
+	echo "${fieldC} ${fieldA} ${fieldB}"
+done < <(echo "some list of values") 
+
+# multiple workers
 some_long_work() {
 	local timer=20
 	sleep $timer;
@@ -204,7 +254,6 @@ done
 exit 0;
 
 
-# this is so HEREDOCS will behave correctly when indented
-# tabs (\t) will not be expanded and will be the width of 4 chars
+## HEREDOC must be indented with tabs. Set correct formating for vim ##
 # vim: tabstop=4 shiftwidth=4 softtabs=4 noexpandtab syntax=bash:
 

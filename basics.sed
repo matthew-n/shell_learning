@@ -19,6 +19,23 @@
 	p;
 }
 
+# find heading in log and squash `hold` with `pattern`
+/heading/ h; 
+
+# match detail line append `pattern` to `hold`
+/detail/ H;
+
+/detail2/ {
+	# append
+	H;
+	# replace `pattern` with `hold`
+	g;
+	# RegEx (multi-line) reduce data 
+	s/^.*deatil: (.*),.*detail2:/\1/;
+	# print and go to next line
+	p; 
+}
+
 
 #### Test Command ####
 # test this script (%) passing as input STDIN (`<`) the process substitution (`<(cmd)`)
