@@ -49,6 +49,10 @@ BEGIN {
 	print;
 }
 
+/MarkStart/,/MarkStop/ {
+	print "we are in a range between the marks"
+}
+
 # the opening brace ( `{` ) for the action must be on the same line as the test
 SOME_FLAG == "ON" && $0 ~ /recTypeA/  {
 	# use ( `>` ) to truncate and open a file
