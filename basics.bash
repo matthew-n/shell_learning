@@ -261,5 +261,4 @@ exit 0;
 
 
 ## HEREDOC must be indented with tabs. Set correct formating for vim ##
-# vim: tabstop=4 shiftwidth=4 softtabs=4 noexpandtab syntax=bash:
-
+# vim: set tabstop=4 shiftwidth=4 softtabstop=4 noexpandtab syntax=bash:

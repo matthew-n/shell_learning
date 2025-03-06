@@ -105,5 +105,4 @@ wait
 # https://stackoverflow.com/questions/29142/getting-ssh-to-execute-a-command-in-the-background-on-target-machine
 
 ## HEREDOC must be indented with tabs. Set correct formating for vim ##
-# vim: set tabstop=4 softtabstop=4 shiftwidth=4 notabexpand:
-
+# vim: set tabstop=4 shiftwidth=4 softtabstop=4 noexpandtab syntax=bash:

@@ -29,4 +29,4 @@ for host in "${_HOSTS[@]}"; do
 done;
 
 ## HEREDOC must be indented with tabs. Set correct formating for vim ##
-# vim: set tabstop=4 softtabstop=4 shiftwidth=4 notabexpand:
+# vim: set tabstop=4 shiftwidth=4 softtabstop=4 noexpandtab syntax=bash:

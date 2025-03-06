@@ -13,10 +13,10 @@
 ################################## END SAMPLE ##################################
 
 /match_me/ {
-	# do some action group
+    # do some action group
 
-	# ending in print
-	p;
+    # ending in print
+    p;
 }
 
 # find heading in log and squash `hold` with `pattern`
@@ -26,14 +26,14 @@
 /detail/ H;
 
 /detail2/ {
-	# append
-	H;
-	# replace `pattern` with `hold`
-	g;
-	# RegEx (multi-line) reduce data 
-	s/^.*deatil: (.*),.*detail2:/\1/;
-	# print and go to next line
-	p; 
+    # append
+    H;
+    # replace `pattern` with `hold`
+    g;
+    # RegEx (multi-line) reduce data 
+    s/^.*deatil: (.*),.*detail2:/\1/;
+    # print and go to next line
+    p; 
 }
 
 
@@ -50,4 +50,4 @@
 #
 ################################ END OUTPUT   ################################
 
-# vim: tabstop=4 shiftwidth=4 softtabs=4 noexpandtab syntax=sed:
+# vim: set tabstop=4 shiftwidth=4 softtabstop=4 expandtab syntax=sed:

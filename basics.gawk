@@ -67,4 +67,4 @@ END {
 	close("/tmp/somefile.log")
 }
 
-# vim: tabstop=4 shiftwidth=4 softtabs=4 noexpandtab syntax=awk:
+# vim: set tabstop=4 shiftwidth=4 softtabstop=4 expandtab syntax=awk:
