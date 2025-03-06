@@ -1,13 +1,20 @@
 #!/usr/bin/env bash
 
-# better to use set lines then flags on the `shebang` line
-# error on: non-zero exit, un-declared variables, error in pipe chian, error on pass-through comands (ex `time`)
+# usual recomendation
+# set -Eeuo pipefail
+
+# sub-scopes inherit ERR traps (-E), exit on errors (-e), no unset variables (-u),
+# exit on: failures, un-declared variables, in pipe-chains, errors in pass through programs
 set -o errexit -o nounset -o pipefail -o errtrace
 
-#set -o errexit	# scipt exits when command fails. Add `|| true` for commands that have non-standard outptuts
-#set -o nounset	# exit when script encounters un-declared variable
+# long alternative
+#set -o errexit		# scipt exits when command fails. Add `|| true` for commands that have non-standard outptuts
+#set -o nounset		# exit when script encounters un-declared variable
 #set -o pipefail	# fail script if there's an error in a pipe chain
 #set -o errtrace	# trace errors thought `time` and some other commands
+
+# hide outputs from backgrouding processes
+# set +m
 
 ## DEBUGING
 _DEBUG=${DEBUG:-}
@@ -38,7 +45,7 @@ echo "Extention: ${_SOME_FILE##*.}"
 echo "New Path: ${_SOME_FILE%*.}$(date +%y%m%d_%H%M%S).${_SOME_FILE##*.}"
 
 ## assert ENV variable
-echo "Importain variable MY_ENV: ${MY_ENV:?Is not not set, cannot proceed}"
+echo "Importaint variable MY_ENV: ${MY_ENV:?Is not not set, cannot proceed}"
 
 # take a root (p)ath and a (t)emplate name to create a (d)irectory (ex. "/tmep/this_script.39d7wq/")
 _WORKDIR=$(mktemp -p "${_WORKDIR}" -t "${_SCRIPT_NAME}-XXXXXX" -d)
@@ -48,7 +55,6 @@ _WORKDIR=$(mktemp -p "${_WORKDIR}" -t "${_SCRIPT_NAME}-XXXXXX" -d)
 # test bash version
 [ "${BASH_VERSINFO[0]:-0}" -ge 4 ] || { echo "ERROR: This script requires Bash 4.0 or newer" >&2; exit 1; }
 #case $BASH_VERSION in ''|[123].*) echo "ERROR: This script requrires Bash 4.0 or newer" >&2; exit 1;; esac;
-
 
 ## Usueful Setup
 
