@@ -29,10 +29,12 @@ fi;
 
 # [Bash Shell Parameter Expandsion] (https://gnu.org/software/bash/manual/html_node/Shell-Parameter-Expansion.html)
 # _MY_GLOBAL="${ENV_VAR:-"default_value"}" # default by variable expansion
-
-_WORKDIR=${TMP:-"/tmp"}			# Environmet variable TMP or default to `/tmp`
 _SCRIPT_NAME_W_EXT=${0##*/}		# Delete longest match from start of string (##) to the pattern (*/)
 _SCRIPT_NAME=${_SCRIPT_NAME_W_EXT%.*}	# Delete shortest match from end of string (%) to the pattern (.*)
+
+_WORKDIR=${TMP:-"/tmp"}			# Environmet variable TMP or default to `/tmp`
+# take a root (p)ath and a (t)emplate name to create a (d)irectory (ex. "/tmep/this_script.39d7wq/")
+_WORKDIR=$(mktemp -p "${_WORKDIR}" -t "${_SCRIPT_NAME}-XXXXXX" -d)
 
 ## file parts with expantion
 _SOME_FILE="/tmp/path/to/file.log"
@@ -47,8 +49,6 @@ echo "New Path: ${_SOME_FILE%*.}$(date +%y%m%d_%H%M%S).${_SOME_FILE##*.}"
 ## assert ENV variable
 echo "Importaint variable MY_ENV: ${MY_ENV:?Is not not set, cannot proceed}"
 
-# take a root (p)ath and a (t)emplate name to create a (d)irectory (ex. "/tmep/this_script.39d7wq/")
-_WORKDIR=$(mktemp -p "${_WORKDIR}" -t "${_SCRIPT_NAME}-XXXXXX" -d)
 
 ## Script Requirements
 
@@ -70,7 +70,8 @@ trap  on_exit EXIT HUP INT QUIT TERM PWR
 # deffer eval until trap is hit by using single quotes (')
 trap 'printf "Trapped error on Line: %d, Exit Code: %d\n\n" ${LINENO} ${?}' ERR
 
-# shellcheck disable=SC=2317 # Don't warn about unreachable commands in this function
+# Don't warn about unreachable commands in this function
+# shellcheck disable=SC2317
 on_exit() {
 	echo "Cleaning up... (remove tmp files, etc...)"
 	#cd ${_WORKDIR}
@@ -127,14 +128,14 @@ error() {
 	local message=( "$@" )
 	local exit_code=3
 
-	local last_param="${message[@]: -1}"
+	local last_param="${message[*]: -1}" # sperate the elements and return the last
 	if is_uint "$last_param"; then
-		exit_code=$Last_param
+		exit_code=$last_param
 		# bash varaiable expansion for removing array[lenght-1]
 		unset "messages[${#message[@]}-1]"
 	fi
-	warn "${messages[@]}"
-	exit $exit_code
+	warn "${message[@]}"
+	exit "$exit_code"
 }
 
 ### TIPS
@@ -164,7 +165,7 @@ fi
 
 ## Using Embeded programs
 embedded_sql_program() {
-	# instead of temporary files for samll embedded programs
+	# instead of temporary files for small embedded programs
 	cat <<- SQL_THAT_DOSE_X_Y_Z
 		select 1
 	SQL_THAT_DOSE_X_Y_Z
@@ -221,7 +222,7 @@ fi
 	cat /etc/{lsb,os}-release
 
 	df -x tmpf -x devtmpfs -x rootfs --human-readable
-	installed lsblk $$ {lsblk -o "NAME,FSTYPE,TYPE,OWNER,GROUP,MODE,UUID,FSAVAIL,FSUSE%,MOUNTPOINT" };
+	installed lsblk && { lsblk -o "NAME,FSTYPE,TYPE,OWNER,GROUP,MODE,UUID,FSAVAIL,FSUSE%,MOUNTPOINT"; };
 
 } | tee > "$_WORKDIR/report.out"
 
@@ -261,4 +262,4 @@ exit 0;
 
 
 ## HEREDOC must be indented with tabs. Set correct formating for vim ##
-# vim: set tabstop=4 shiftwidth=4 softtabstop=4 noexpandtab syntax=bash:
+# vim: set tabstop=4 shiftwidth=4 softtabstop=4 noexpandtab syntax=bash :

@@ -55,7 +55,7 @@ send_command () {
 	# set the first arg to readonly variable and shift if off the args array
 	local -r cmd=$1; shift;
 	# expand the args array quoting each element and sperating with space
-	local -a arr=( $@ );
+	local -a arr=( "$@" );
 
 	# example body code: looping over local array
 	for x in "${arr[@]}"; do
@@ -95,6 +95,34 @@ send_command "test command" "${fds[@]}"
 
 # pause execution until all sub-processes return
 wait
+
+make_in_clause_list () {
+	local IFS=','
+	local temp
+	local -r tick="'"
+
+	temp=( "$@" )                 # copy input into array
+	temp=( "${temp[@]/#/$tick}" ) # add quotes before each
+	temp=( "${temp[@]/%/$tick}" ) # add quotes after each
+	
+	# on global debug set print to stderr
+	[ -n "${_DEBUG}" ] && printf "IN clause list: >%s<" "${temp[*]}" >&2
+	# explicitly flatten array to string
+	echo "${temp[*]}"
+}
+
+join () {
+	local IFS="$1"
+	shift
+	echo "$@"
+}
+
+suffix="_suffix"
+echo "how to add suffix to elements of an array: ${dest_list[*]/%/${suffix}}"
+echo "moddern quote list: ${dest_list[*]@Q}"
+echo "Join a list: $(join ',' "${dest_list[@]}") "
+echo "Join a list: $(make_in_clause_list "${dest_list[@]}") "
+echo "Join a list: $(join ',' "${dest_list[@]@Q}" )"
 
 # [Notes]
 # unattended background executions: https://stackoverflow.com/a/52033580
